@@ -53,6 +53,7 @@ int main(void)
  		state = atoi(filteredStr[1]);      //Select logical state of component
  		position = atoi(filteredStr[2]);   //Select which pin position you want to adress
 		
+		temperature();
 	    checkComponent();  //Check which component you currenlty want to control
 		alarm(); //holds alarm logic
     }
@@ -100,25 +101,12 @@ ISR(TIMER0_COMPA_vect)
 {
 	sendTemp ++; //counter
 
-	//sends on startup a string holding the current temperature over UART
-	if((sendTemp > 50) && firstTemp == 0)
+	//sends on startup a string holding the current temperature over UART,after startup the sensor value will be send every 5 seconds
+	if(((sendTemp > 50) && firstTemp == 0) || (sendTemp > 5000))
 	{
-		tempSensor = readADC(0); //reads ADC value
-		temp = mVoltADC(voltADC(tempSensor)) / 10; //convert mV to *C
-		sprintf(sendTempStr,"temp_%d\r",temp); //format string which has to be send
-		serialSendString(sendTempStr); //send indecator string with current temperature
+		adcFlag = TRUE;
 		firstTemp = TRUE; 
 		sendTemp = 0; //reset counter
-	}
-
-    //sends every 5 second the temperature over UART
-	if(sendTemp > 5000)
-	{
-		tempSensor = readADC(0);
-		temp = mVoltADC(voltADC(tempSensor)) / 10;
-		sprintf(sendTempStr,"temp_%d\r",temp);
-		serialSendString(sendTempStr);
-		sendTemp = 0;
 	}
 }
 
@@ -179,7 +167,7 @@ void checkComponent()
 
 			//Make sure leds and buzzer are LOW
 			for(int i = 0;i < PORTCOUNT;i++)
-				registerTogglePin(&s1,ALARM,i,0); //aan
+				registerTogglePin(&s1,ALARM,i,0); 
 			digitalWrite(BUZZER,LOW);
 		}
 	}
@@ -187,9 +175,7 @@ void checkComponent()
 
 /**
   * @brief  Function which hold the logic of the alarm
-  * @param  component: received state of component
-  * @param  position:  received state of position
-  * @param  state:     received which component to interact with
+  * @param  None
   * @retval None
   */
 void alarm()
@@ -213,10 +199,25 @@ void alarm()
 }
 
 /**
+  * @brief  Function which hold the logic of the ADC
+  * @param  None
+  * @retval None
+  */
+void temperature()
+{
+	if(adcFlag == TRUE)
+	{
+		tempSensor = readADC(0); //reads ADC value
+		temp = mVoltADC(voltADC(tempSensor)) / 10; //convert mV to *C
+		sprintf(sendTempStr,"temp_%d\r",temp); //format string which has to be send
+		serialSendString(sendTempStr); //send indecator string with current temperature
+		adcFlag = FALSE;
+	}
+}
+
+/**
   * @brief  Function which displays the animation when PIR gets triggerd
-  * @param  component: received state of component
-  * @param  position:  received state of position
-  * @param  state:     received which component to interact with
+  * @param  None
   * @retval None
   */
 void blinky()

@@ -28,6 +28,7 @@
 	int disableAlarmFlag = 0;
 	int firstTemp = FALSE;
 	uint16_t tempSensor = 0;
+	int adcFlag = FALSE;
 
 	//Alarm
 	int enablePIR_flag = FALSE;
@@ -40,5 +41,6 @@
 	void filterReceived(char *unfiltered,char *filtered[]);
 	void checkComponent();
 	void alarm();
+	void temperature();
 	void blinky();
 #endif
